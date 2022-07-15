@@ -1,6 +1,41 @@
 expNnWindowed-become-slow
 =========================
 
+# Fixed with the following patch.
+
+```
+diff -ruN ./zig-0.10.0-dev.3004+397e6547a/lib.orig/std/math/big/int.zig ./zig-0.10.0-dev.3004+397e6547a/lib/std/math/big/int.zig
+--- ./zig-0.10.0-dev.3004+397e6547a/lib.orig/std/math/big/int.zig	2022-07-15 16:16:45.000000000 +0900
++++ ./zig-0.10.0-dev.3004+397e6547a/lib/std/math/big/int.zig	2022-07-15 23:20:00.858757649 +0900
+@@ -2780,7 +2780,7 @@
+         if (alias_count == 0) {
+             m.mulNoAlias(a.toConst(), b.toConst(), rma.allocator);
+         } else {
+-            const limb_count = calcMulLimbsBufferLen(a.limbs.len, b.limbs.len, alias_count);
++            const limb_count = calcMulLimbsBufferLen(a.toConst().limbs.len, b.toConst().limbs.len, alias_count);
+             const limbs_buffer = try rma.allocator.alloc(Limb, limb_count);
+             defer rma.allocator.free(limbs_buffer);
+             m.mul(a.toConst(), b.toConst(), limbs_buffer, rma.allocator);
+@@ -2960,7 +2960,7 @@
+ 
+     /// r = a * a
+     pub fn sqr(rma: *Managed, a: *const Managed) !void {
+-        const needed_limbs = 2 * a.limbs.len + 1;
++        const needed_limbs = 2 * a.toConst().limbs.len + 1;
+ 
+         if (rma.limbs.ptr == a.limbs.ptr) {
+             var m = try Managed.initCapacity(rma.allocator, needed_limbs);
+```
+
+```
+$ time ~/zig/zig-0.10.0-dev.3004+397e6547a/zig test src/zig-master.zig
+All 1 tests passed.
+
+real    0m1.082s
+user    0m0.940s
+sys     0m0.211s
+```
+
 # zig-0.10.0-dev.2998+a45592715
 
 ```
